@@ -1,22 +1,9 @@
 import os
-import argparse
 from time import sleep
 
 import requests
 import telegram
 from dotenv import load_dotenv
-
-
-def create_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        'user_id',
-        type=str,
-        nargs='?',
-        default='',
-        help='Telegram user ID',
-    )
-    return parser
 
 
 def create_answer(bool, records) -> str:
@@ -35,14 +22,7 @@ def main():
     load_dotenv()
     dvmn_token = os.environ['DVMN_TOKEN']
     bot_token = os.environ['BOT_TOKEN']
-
-    parser = create_parser()
-    args = parser.parse_args()
-
-    user_id = os.getenv('TG_USER_ID', default='') or args.user_id
-
-    if not user_id:
-        raise ValueError('The Telegram user ID is not specified')
+    user_id = os.environ['TG_USER_ID']
 
     bot = telegram.Bot(token=bot_token)
 
@@ -84,7 +64,7 @@ def main():
                 )
 
         except requests.exceptions.ReadTimeout:
-            print('\nThe waiting time has been exceeded.\nSending a new request.')
+            pass
 
         except requests.exceptions.ConnectionError:
             print(

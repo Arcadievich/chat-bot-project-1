@@ -33,7 +33,7 @@ pip install -r requirements.txt
 - В папке репозитория создайте `.env` файл и укажите в нем следующие параметры:
     * `DVMN_TOKEN` - ваш API Token на сайте [devman](https://dvmn.org/api/docs/)
     * `BOT_TOKEN` - токен вашего Telegram бота
-    * `TG_USER_ID` - ID вашего аккаунта в Telegram. (Можно не указывать этот параметр, если вы напишите его при запуске скрипта)
+    * `TG_USER_ID` - ID вашего аккаунта в Telegram.
 
 Пример указания параметра в `.env` файле:
 ```.env
@@ -45,11 +45,6 @@ DVMN_TOKEN = 'TOKEN'
 Для запуска скрипта используйте команду:
 ```powershell
 python script.py
-```
-
-Или с указанием вашего ID Telegram:
-```powershell
-python script.py 111111111
 ```
 
 ### Цель проекта
