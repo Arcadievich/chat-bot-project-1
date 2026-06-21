@@ -1,9 +1,22 @@
 import os
+import logging
 from time import sleep
 
 import requests
 import telegram
 from dotenv import load_dotenv
+
+
+class TelegramLogsHandler(logging.Handler):
+    
+    def __init__(self, tg_bot, chat_id):
+        super().__init__()
+        self.chat_id = chat_id
+        self.tg_bot = tg_bot
+
+    def emit(self, record):
+        log_entry = self.format(record)
+        self.tg_bot.send_message(chat_id=self.chat_id, text=log_entry)
 
 
 def create_answer(bool, records) -> str:
@@ -25,6 +38,12 @@ def main():
     user_id = os.environ['TG_USER_ID']
 
     bot = telegram.Bot(token=bot_token)
+
+    logger = logging.getLogger('Logger')
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(TelegramLogsHandler(bot, user_id))
+
+    logger.debug('Бот перезапустился')
 
     timestamp = None
 
