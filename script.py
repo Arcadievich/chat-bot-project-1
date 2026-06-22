@@ -34,64 +34,68 @@ def create_answer(bool, records) -> str:
 def main():
     load_dotenv()
     dvmn_token = os.environ['DVMN_TOKEN']
-    bot_token = os.environ['BOT_TOKEN']
+    bot_token = os.environ['MAIN_BOT_TOKEN']
+    debug_bot_token = os.environ['DEBUG_BOT_TOKEN']
     user_id = os.environ['TG_USER_ID']
 
     bot = telegram.Bot(token=bot_token)
+    debug_bot = telegram.Bot(token=debug_bot_token)
 
     logger = logging.getLogger('Logger')
     logger.setLevel(logging.DEBUG)
-    logger.addHandler(TelegramLogsHandler(bot, user_id))
+    logger.addHandler(TelegramLogsHandler(debug_bot, user_id))
 
     logger.debug('Бот перезапустился')
 
     timestamp = None
 
-    while True:
-        url = 'https://dvmn.org/api/long_polling/'
-        headers = {'Authorization': f'Token {dvmn_token}'}
-        payload = {'timestamp': timestamp}
+    try:
+        while True:
+            url = 'https://dvmn.org/api/long_polling/'
+            headers = {'Authorization': f'Token {dvmn_token}'}
+            payload = {'timestamp': timestamp}
 
-        try:
-            if timestamp:
-                response = requests.get(
-                    url,
-                    headers=headers,
-                    params=payload,
-                    timeout=15,
+            try:
+                if timestamp:
+                    response = requests.get(
+                        url,
+                        headers=headers,
+                        params=payload,
+                        timeout=15,
+                    )
+                else:
+                    response = requests.get(
+                        url,
+                        headers=headers,
+                        timeout=15,
+                    )
+                response.raise_for_status()
+
+                records = response.json()
+                timestamp = records['last_attempt_timestamp']
+
+                if records['new_attempts'][0]['is_negative']:
+                    bot.send_message(
+                        chat_id=user_id,
+                        text=create_answer(True, records),
+                    )
+                else:
+                    bot.send_message(
+                        chat_id=user_id,
+                        text=create_answer(False, records),
+                    )
+
+            except requests.exceptions.ReadTimeout:
+                pass
+
+            except requests.exceptions.ConnectionError:
+                print(
+                    '\nThe Internet connection is lost.',
+                    '\nThe connection attempt will be repeated after 30 seconds.',
                 )
-            else:
-                response = requests.get(
-                    url,
-                    headers=headers,
-                    timeout=15,
-                )
-            response.raise_for_status()
-
-            records = response.json()
-            timestamp = records['last_attempt_timestamp']
-
-            if records['new_attempts'][0]['is_negative']:
-                bot.send_message(
-                    chat_id=user_id,
-                    text=create_answer(True, records),
-                )
-            else:
-                bot.send_message(
-                    chat_id=user_id,
-                    text=create_answer(False, records),
-                )
-
-        except requests.exceptions.ReadTimeout:
-            pass
-
-        except requests.exceptions.ConnectionError:
-            print(
-                '\nThe Internet connection is lost.',
-                '\nThe connection attempt will be repeated after 30 seconds.',
-            )
-            sleep(30)
-
+                sleep(30)
+    except Exception:
+        logger.error('Бот упал с ошибкой:', exc_info=True)
 
 if __name__ == '__main__':
     main()
